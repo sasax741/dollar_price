@@ -6,6 +6,6 @@ api usada por dolarHoy y otras aplicaciones web muestran el precio del dolar
 
 mi objectivo con esta app es integrarla en el path de mi maquina linux y poder verificar el precio del dolar desde mi PC
 
-para compilar el programas uso gcc
+para compilar el programa uso gcc
 
 comando de compilacion : gcc -o dollar2 dollar.c -lcurl -ljansson -L/ruta/a/libjansson
