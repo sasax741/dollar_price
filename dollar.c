@@ -4,6 +4,7 @@
 #ifndef _WIN32
 #include <net/if.h>
 #endif
+#include <string.h> 
 
 char *contents;
 
