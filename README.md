@@ -37,6 +37,36 @@ Para ejecutar el programa, usa el siguiente comando:
 ./dollar_program
 ```
 
+## Agregar el Ejecutable al PATH
+
+Para ejecutar el programa desde cualquier lugar sin necesidad de especificar la ruta completa, agrega el directorio que contiene el ejecutable a tu PATH. Sigue estos pasos:
+
+    Ubica el directorio del ejecutable (por ejemplo, si está en /home/alexis/desarrollo/personal/dollar_price/).
+
+    Agrega el directorio al PATH. Abre tu archivo de configuración de shell (~/.bashrc o ~/.bash_profile) y añade la siguiente línea al final:
+
+```bash
+
+export PATH="$PATH:/directorio/en/donde/esta/el_compilado"
+```
+
+## Aplica los cambios ejecutando:
+
+```bash
+
+    source ~/.bashrc
+```
+
+## Ahora puedes ejecutar el programa simplemente escribiendo:
+
+```bash
+
+dollar_price
+```
+
+o como le hayas puesto al output al momento de compilar
+
+
 ## Notas
 
     Asegúrate de tener acceso a Internet, ya que el programa realiza una solicitud a una API externa para obtener los precios del dólar.
