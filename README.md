@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="logo.svg" alt="Logo del Proyecto" width="280" height="80">
+</div>
+
 # Verificador de Precio del Dólar
 
 Esta es una simple aplicación de línea de comandos para verificar el precio actual del dólar estadounidense en Argentina. Obtiene los datos desde la API pública en `https://dolarapi.com`.

@@ -1,0 +1,13 @@
+<svg width="280" height="80" viewBox="0 0 280 80" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .logo-text {
+      font-family: 'Product Sans', 'Google Sans', Arial, sans-serif;
+      font-size: 30px;
+      font-weight: 500;
+      fill: #34A853;
+      text-anchor: middle;
+      dominant-baseline: central;
+    }
+  </style>
+  <text x="50%" y="50%" class="logo-text">dollar_price</text>
+</svg>
