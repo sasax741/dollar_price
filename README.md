@@ -21,6 +21,12 @@ USD
 
 ## Instalación
 
+### One-liner (Linux)
+
+```bash
+curl -sSL https://raw.githubusercontent.com/sasax741/dollar_price/main/scripts/install.sh | sh
+```
+
 ### Dependencias
 
 **Debian/Ubuntu:**
