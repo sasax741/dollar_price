@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        compiler: [gcc, clang]
+        exclude:
+          - os: macos-latest
+            compiler: gcc
+
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            libcurl4-openssl-dev \
+            libjansson-dev \
+            libcmocka-dev \
+            cppcheck
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install curl jansson cmocka cppcheck
+
+      - name: Select compiler
+        run: |
+          if [ "${{ matrix.compiler }}" = "clang" ]; then
+            echo "CC=clang" >> $GITHUB_ENV
+          else
+            echo "CC=gcc" >> $GITHUB_ENV
+          fi
+
+      - name: Build
+        run: make
+
+      - name: Run unit tests
+        run: make test
+
+      - name: Test binary runs
+        run: ./dollar --no-colors --no-cache --timeout=15
+
+      - name: Test JSON output
+        run: |
+          JSON=$(./dollar --no-colors --no-cache --timeout=15 --format=json)
+          echo "$JSON" | python3 -c "import json,sys; data=json.load(sys.stdin); print(f'{len(data)} cotizaciones'); assert len(data) > 0"
+
+      - name: Static analysis (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          cppcheck --enable=all --suppress=missingIncludeSystem \
+            --suppress=unmatchedSuppression \
+            --error-exitcode=1 \
+            src/ include/
+
+      - name: Verify help output
+        run: ./dollar --help | grep -q "dollar"
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            libcurl4-openssl-dev \
+            libjansson-dev
+
+      - name: Build
+        run: make clean && make
+
+      - name: Package binary
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          mkdir -p dist
+          cp dollar "dist/dollar-linux-amd64"
+          strip "dist/dollar-linux-amd64"
+          cd dist && sha256sum dollar-linux-amd64 > dollar-linux-amd64.sha256
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: dist/*
