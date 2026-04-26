@@ -54,12 +54,13 @@ OBJECTS := $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SOURCES))
 # Header files
 HEADERS := $(wildcard $(INCDIR)/*.h)
 
-# Test files (for future use)
+# Test files
 TESTDIR := tests
 TESTSOURCES := $(wildcard $(TESTDIR)/*.c)
+TEST_OBJS := $(patsubst $(TESTDIR)/%.c,$(OBJDIR)/test_%,$(TESTSOURCES))
 
 # Phony targets
-.PHONY: all clean install uninstall test check-deps
+.PHONY: all clean install uninstall test check-deps test-parser test-security
 
 # Default target
 all: check-deps $(TARGET)
@@ -69,6 +70,10 @@ check-deps:
 	@command -v $(CC) >/dev/null 2>&1 || { echo "Error: $(CC) not found"; exit 1; }
 	@command -v curl-config >/dev/null 2>&1 || { echo "Error: libcurl not found"; exit 1; }
 	@pkg-config --exists jansson 2>/dev/null || { echo "Error: jansson not found"; exit 1; }
+
+# Check test dependencies
+check-test-deps:
+	@pkg-config --exists cmocka 2>/dev/null || { echo "Error: cmocka not found (install libcmocka-dev)"; exit 1; }
 
 # Include directory
 $(shell $(MKDIR) $(OBJDIR) 2>/dev/null)
@@ -143,15 +148,32 @@ uninstall:
 		echo "$(TARGET) is not installed in $(BINDIR)"; \
 	fi
 
-# Test target (placeholder for future tests)
-test: $(TARGET)
-	@echo "Running tests..."
-	@./$(TARGET)
+# Test targets
+test: check-test-deps $(TARGET) test-parser test-security
+	@echo "All tests passed!"
+
+TEST_LDFLAGS := -lcmocka -lcurl -ljansson -lm
+
+$(OBJDIR)/test_parser: tests/test_parser.c $(filter-out $(OBJDIR)/main.o, $(OBJECTS))
+	@echo "CC  $@"
+	$(CC) $(CFLAGS) -I$(INCDIR) $^ -o $@ $(TEST_LDFLAGS)
+
+$(OBJDIR)/test_security: tests/test_security.c $(OBJDIR)/security.o
+	@echo "CC  $@"
+	$(CC) $(CFLAGS) -I$(INCDIR) $^ -o $@ $(TEST_LDFLAGS) -lm
+
+test-parser: $(OBJDIR)/test_parser
+	@echo "Running parser tests..."
+	@./$(OBJDIR)/test_parser
+
+test-security: $(OBJDIR)/test_security
+	@echo "Running security tests..."
+	@./$(OBJDIR)/test_security
 
 # Clean build artifacts
 clean:
 	@echo "Cleaning build files..."
-	$(RM) $(TARGET) $(STATIC_TARGET)
+	$(RM) $(TARGET) $(STATIC_TARGET) $(TEST_OBJS)
 	$(RM) -r $(OBJDIR)
 	$(RM) -r *.o
 	@echo "Cleanup complete."

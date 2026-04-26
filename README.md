@@ -1,93 +1,122 @@
 <div align="center">
-  <img src="logo.svg" alt="Logo del Proyecto" width="280" height="80">
+  <img src="logo.svg" alt="Dollar Price Checker" width="280" height="80">
 </div>
 
-# Verificador de Precio del Dólar
+# Dollar Price Checker
 
-Esta es una simple aplicación de línea de comandos para verificar el precio actual del dólar estadounidense en Argentina. Obtiene los datos desde la API pública en `https://dolarapi.com`.
-
-El objetivo de este proyecto es tener un comando simple disponible en el PATH del sistema para consultar rápidamente las cotizaciones del dólar desde cualquier terminal.
-
-## Plataformas Soportadas
-
-- **Linux**
-- **macOS** (usando Homebrew)
-
-## Prerrequisitos
-
-Antes de compilar, necesitas tener las siguientes dependencias instaladas:
-
-- **`gcc`**: El Compilador GNU.
-- **`make`**: La herramienta para automatizar la compilación.
-- **`libcurl`**: Una librería para realizar peticiones HTTP.
-- **`jansson`**: Una librería para procesar datos en formato JSON.
-
-### Instalación de Dependencias
-
-- **En Debian/Ubuntu (Linux):**
-  ```bash
-  sudo apt-get update
-  sudo apt-get install build-essential libcurl4-openssl-dev libjansson-dev
-  ```
-
-- **En macOS (usando Homebrew):**
-  Primero, instala [Homebrew](https://brew.sh) si no lo tienes. Luego, instala las dependencias:
-  ```bash
-  brew install curl jansson
-  ```
-
-## Compilación e Instalación
-
-El proyecto usa un `Makefile` para simplificar todo el proceso. Sigue estos pasos:
-
-1.  **Compilar e Instalar:**
-    Abre tu terminal, navega al directorio del proyecto y ejecuta el siguiente comando:
-    ```bash
-    sudo make install
-    ```
-    Este comando primero compilará la aplicación y luego la instalará en `/usr/local/bin` para que esté disponible en todo el sistema.
-
-2.  **Verificar la instalación:**
-    Una vez finalizado, puedes ejecutar `dollar` desde cualquier lugar en tu terminal para ver las cotizaciones.
-
-## Limpieza
-
-Para eliminar el ejecutable compilado del directorio del proyecto, ejecuta:
+Consulta las cotizaciones del dólar en Argentina desde la terminal. Rápido, seguro y mínimo.
 
 ```bash
-make clean
+dollar
 ```
 
----
+```
+Dólar Blue
+-----------
+USD
+  COMPRA: 1395.00
+  VENTA:  1415.00
+  24/04/2026 16:08
+```
 
-## Funcionamiento del Código (`dollar.c`)
+## Instalación
 
-El código fuente está escrito en C y su lógica se puede dividir en los siguientes pasos:
+### Dependencias
 
-1.  **Petición HTTP**: Se utiliza la librería `libcurl` para realizar una petición `GET` a la URL de la API (`https://dolarapi.com/v1/dolares`).
+**Debian/Ubuntu:**
+```bash
+sudo apt-get install build-essential libcurl4-openssl-dev libjansson-dev
+```
 
-2.  **Recepción de Datos**: Una función `WriteCallback` se encarga de recibir los datos de la respuesta. Esta función reserva memoria dinámicamente (`realloc`) para almacenar la respuesta completa, que llega en formato de texto (JSON).
+**macOS (Homebrew):**
+```bash
+brew install curl jansson
+```
 
-3.  **Procesamiento de JSON**: Una vez recibida la respuesta, la librería `jansson` se utiliza para interpretar (parsear) el texto JSON y convertirlo en una estructura de datos que C puede manejar. La respuesta de la API es un array de objetos, donde cada objeto representa un tipo de dólar.
+### Compilar e instalar
 
-4.  **Iteración y Muestra de Datos**: El código recorre cada elemento del array JSON. Para cada tipo de dólar, extrae los valores de las claves `casa`, `moneda`, `compra`, `venta` y `fechaActualizacion`.
+```bash
+make
+sudo make install
+dollar
+```
 
-5.  **Manejo de Tipos**: La API puede devolver los precios como números enteros o decimales. El código verifica el tipo de dato de los precios (`compra` y `venta`) y los convierte a un formato `double` para poder mostrarlos de manera uniforme con dos decimales.
+Para instalar sin sudo:
+```bash
+make install PREFIX=~/.local
+```
 
-6.  **Limpieza de Memoria**: Al finalizar, se libera toda la memoria asignada para la respuesta y los objetos JSON, y se cierran las conexiones de `libcurl` para evitar fugas de memoria y mantener el programa eficiente.
+## Uso
 
-## Funcionamiento del `Makefile`
+```bash
+dollar                    # Tabla con colores
+dollar --format=json      # JSON machine-readable
+dollar --no-colors        # Sin colores (pipelines)
+dollar --no-cache         # Ignorar cache
+dollar --timeout=15       # Timeout en segundos
+dollar --cache-ttl=600    # Cache por 10 min
+dollar --help             # Ayuda completa
+```
 
-El `Makefile` automatiza el proceso de compilación, instalación y limpieza del proyecto.
+### Variables de entorno
 
-- **Variables**: Se definen variables al inicio para el compilador (`CC`), los flags de compilación (`CFLAGS_BASE`), los flags del enlazador (`LDFLAGS_BASE`) y el nombre del ejecutable (`TARGET`). Esto facilita la modificación futura.
+| Variable | Descripción |
+|---|---|
+| `DOLLAR_NO_COLOR` | Desactivar colores |
+| `DOLLAR_TIMEOUT` | Timeout en segundos |
+| `DOLLAR_CACHE_TTL` | TTL del cache en segundos |
 
-- **Detección de Sistema Operativo**: El `Makefile` detecta automáticamente si se está ejecutando en `Linux` o `Darwin` (macOS) usando el comando `uname -s`.
+### JSON output
 
-- **Compatibilidad con macOS**: Si detecta macOS, busca la ruta de instalación de Homebrew. Si la encuentra, añade las rutas de las librerías (`/include` y `/lib`) a los flags del compilador y enlazador. Esto permite que `gcc` encuentre `libcurl` y `jansson` instaladas con Homebrew. También verifica si las librerías están instaladas y avisa al usuario si no lo están.
+```bash
+dollar --format=json | jq '.[0].venta'
+# 1415.00
+```
 
-- **Reglas (Targets)**:
-    - `all`: Es la regla por defecto. Su única dependencia es el `TARGET` (`dollar`), por lo que al ejecutar `make`, se activa la compilación. En macOS, también depende de la verificación de librerías.
-    - `$(TARGET)`: La regla principal de compilación. Se ejecuta si `dollar.c` ha sido modificado. Lanza el compilador `gcc` con todos los flags y librerías necesarios.
-    - `install`: Depende de `all`, asegurando que el programa esté compilado antes de instalar. Copia el ejecutable `dollar` a `/usr/local/bin`, requiriendo permisos de `sudo`.
-    - `clean`: Elimina el archivo ejecutable (`dollar`) del directorio del proyecto.
+## Arquitectura
+
+```
+├── include/          Headers públicos
+│   ├── cache.h       Cache offline con TTL
+│   ├── config.h      Constantes y códigos de error
+│   ├── network.h     Cliente HTTP con retry
+│   ├── parser.h      Parser JSON con schema validation
+│   └── security.h    Validaciones de seguridad
+├── src/              Módulos core
+│   ├── cache.c       Cache en ~/.dollar/cache.json
+│   ├── main.c        Main loop e integración
+│   ├── network.c     HTTP + retry exponencial
+│   ├── parser.c      JSON parsing + validación
+│   └── security.c    Límites de buffer, rangos, sanitización
+└── tests/            Tests unitarios (CMocka)
+    ├── test_parser.c     8 tests
+    └── test_security.c   15 tests
+```
+
+### Seguridad
+
+- Límite de 1MB en respuestas
+- Timeout configurable (defecto 30s)
+- Retry exponencial (1s → 2s → 4s, máximo 3 intentos)
+- Cache offline en fallos de API
+- Validación de rangos de precios (0.01–10000)
+- Sanitización de strings JSON
+- SSL verification activa (anti-MITM)
+
+## Tests
+
+```bash
+make test        # Compila y ejecuta todos los tests
+make test-parser    # Solo parser
+make test-security  # Solo security
+```
+
+23 tests, 0 fallos.
+
+## API
+
+Usa [dolarapi.com](https://dolarapi.com) — endpoint público gratuito.
+
+## Licencia
+
+MIT
