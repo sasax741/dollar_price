@@ -58,7 +58,7 @@ int parse_dollar_rates(const char *json_str, DollarRate **rates, size_t *count) 
         json_t *compra_val = json_object_get(element, "compra");
         json_t *venta_val = json_object_get(element, "venta");
         json_t *fecha_val = json_object_get(element, "fechaActualizacion");
-        const char *casa_str, *moneda_str, *fecha_str;
+        const char *casa_str, *moneda_str;
         double compra, venta;
 
         /* Validate required fields exist */
@@ -131,7 +131,7 @@ int parse_dollar_rates(const char *json_str, DollarRate **rates, size_t *count) 
 
         /* Optional fecha field */
         if (fecha_val && json_is_string(fecha_val)) {
-            fecha_str = json_string_value(fecha_val);
+            const char *fecha_str = json_string_value(fecha_val);
             if (validate_string_length(fecha_str, MAX_FECHA_LEN - 1) == 0) {
                 safe_strncpy((*rates)[i].fecha, fecha_str, MAX_FECHA_LEN);
             }

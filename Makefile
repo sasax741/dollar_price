@@ -156,11 +156,11 @@ TEST_LDFLAGS := -lcmocka -lcurl -ljansson -lm
 
 $(OBJDIR)/test_parser: tests/test_parser.c $(filter-out $(OBJDIR)/main.o, $(OBJECTS))
 	@echo "CC  $@"
-	$(CC) $(CFLAGS) -I$(INCDIR) $^ -o $@ $(TEST_LDFLAGS)
+	$(CC) $(CFLAGS) -I$(INCDIR) $^ -o $@ $(LDFLAGS) $(TEST_LDFLAGS)
 
 $(OBJDIR)/test_security: tests/test_security.c $(OBJDIR)/security.o
 	@echo "CC  $@"
-	$(CC) $(CFLAGS) -I$(INCDIR) $^ -o $@ $(TEST_LDFLAGS) -lm
+	$(CC) $(CFLAGS) -I$(INCDIR) $^ -o $@ $(LDFLAGS) $(TEST_LDFLAGS) -lm
 
 test-parser: $(OBJDIR)/test_parser
 	@echo "Running parser tests..."
